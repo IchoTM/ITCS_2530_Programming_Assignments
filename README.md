@@ -1,2 +1,4 @@
 # ITCS_2530_Programming_Assignments
-A concise repo meant to orginize projects and assignments regarding ITCS 2530
+## By: Johnathon Sperry
+
+The goal of this repository is to track and maintain projects and assignments created by me (John) for ITCS 2530.
