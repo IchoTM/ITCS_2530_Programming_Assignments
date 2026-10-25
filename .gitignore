@@ -66,3 +66,12 @@ vcpkg_installed/
 # test output & cache
 Testing/
 .cache/
+
+# Visual Studio user-specific files
+.vs/
+x64/
+Debug/
+Release/
+*.suo
+*.user
+*.aps
