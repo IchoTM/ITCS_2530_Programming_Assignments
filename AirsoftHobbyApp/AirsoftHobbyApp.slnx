@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="AirsoftHobbyApp.vcxproj" Id="7c593983-4a80-4b46-a9f0-b7eec4c627ea" />
+</Solution>
