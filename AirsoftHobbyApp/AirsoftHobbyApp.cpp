@@ -13,20 +13,23 @@
 
 using namespace std;
 
+//Enum Definition(NEW)
+enum SkillLevel {BEGINNER = 1, INTERMEDIATE, ADVANCED};
+
 // --- FUNCTION PROTOTYPES ---
 void displayBanner();
 void setConsoleColor(string colorCode);
-void getValidatedInputs(string& favoriteReplica, string& playStyle, int& hoursPerMonth, double& costPerBb);
-void calculateTacticalMetrics(int hoursPerMonth, double costPerBb, string playStyle,
+void getValidatedInputs(string& favoriteReplica, string& playStyle, double& costPerBb, SkillLevel& skill);
+void calculateTacticalMetrics(double averageHours, double costPerBb, string playStyle,
     double& estimatedBbsPerMonth, double& totalMonthlyCost,
     string& operatorTier, string& budgetWarning);
-void runTacticalMenu(string favoriteReplica, string playStyle, int hoursPerMonth,
+void runTacticalMenu(string favoriteReplica, string playStyle,
     double estimatedBbsPerMonth, double costPerBb, double totalMonthlyCost,
     string operatorTier, string budgetWarning);
-void saveReportToFile(string favoriteReplica, string playStyle, int hoursPerMonth,
+void saveReportToFile(string favoriteReplica, string playStyle, double averageHours,
     double estimatedBbsPerMonth, double costPerBb, double totalMonthlyCost,
-    string operatorTier, string budgetWarning);
-
+    string operatorTier, string budgetWarning, SkillLevel userSkill);
+double getMonthlyHoursAverage(double monthlyHours[], int months);
 // --- MAIN FUNCTION ---
 int main() {
     displayBanner();
@@ -35,26 +38,34 @@ int main() {
 
     string favoriteReplica = "";
     string playStyle = "";
-    int hoursPerMonth = 0;
+    const int months = 3;
     double costPerBb = 0.0;
     double estimatedBbsPerMonth = 0.0;
     double totalMonthlyCost = 0.0;
+    double averageHours = 0.0;
     string operatorTier = "";
     string budgetWarning = "";
+    SkillLevel userSkill = BEGINNER;
 
-    getValidatedInputs(favoriteReplica, playStyle, hoursPerMonth, costPerBb);
+    //Array variables(NEW)
+    double monthlyHours[months] = {};
 
-    calculateTacticalMetrics(hoursPerMonth, costPerBb, playStyle,
+    getValidatedInputs(favoriteReplica, playStyle, costPerBb, userSkill);
+
+    //Call/collect averageHours from getMonthlyHoursAverage function. (NEW)
+    averageHours = getMonthlyHoursAverage(monthlyHours, months);
+
+    calculateTacticalMetrics(averageHours, costPerBb, playStyle,
         estimatedBbsPerMonth, totalMonthlyCost,
         operatorTier, budgetWarning);
 
-    runTacticalMenu(favoriteReplica, playStyle, hoursPerMonth,
+    runTacticalMenu(favoriteReplica, playStyle,
         estimatedBbsPerMonth, costPerBb, totalMonthlyCost,
         operatorTier, budgetWarning);
 
-    saveReportToFile(favoriteReplica, playStyle, hoursPerMonth,
+    saveReportToFile(favoriteReplica, playStyle, averageHours,
         estimatedBbsPerMonth, costPerBb, totalMonthlyCost,
-        operatorTier, budgetWarning);
+        operatorTier, budgetWarning, userSkill);
 
     setConsoleColor("reset");
 
@@ -91,27 +102,29 @@ void setConsoleColor(string colorCode) {
 }
 
 // Function to collect inputs and handle stream validation using while loops
-void getValidatedInputs(string& favoriteReplica, string& playStyle, int& hoursPerMonth, double& costPerBb) {
+void getValidatedInputs(string& favoriteReplica, string& playStyle, double& costPerBb, SkillLevel& skill) {
     cout << "Enter your favorite airsoft replica/platform (e.g., MP7 GBB): ";
     getline(cin, favoriteReplica);
 
     cout << "Enter your preferred play style (e.g., CQB, Milsim): ";
     getline(cin, playStyle);
 
-    cout << "Enter your average hours played on the field per month (whole hours): ";
-    cin >> hoursPerMonth;
-    // While loop for input validation
-    while (!cin) {
-        cout << "Input Error: Please enter a valid integer for hours: ";
+    //Skill Input(NEW)
+    int skillChoice = 1;
+    cout << "Enter Your Skill Level (1. Beginner 2. Intermediate 3. Advanced): ";
+    cin >> skillChoice;
+    while (!cin || skillChoice < 1 || skillChoice > 3) {
+        cout << "Input Error: Please enter a valid integer for SkillChoice: (1-3) ";
         cin.clear();
         cin.ignore(10000, '\n');
-        cin >> hoursPerMonth;
+        cin >> skillChoice;
     }
+    skill = static_cast<SkillLevel>(skillChoice);
 
     cout << "Enter cost per individual BB (e.g., 0.025): ";
     cin >> costPerBb;
     // While loop for input validation
-    while (!cin) {
+    while (!cin || costPerBb < 0) {
         cout << "Input Error: Please enter a valid numeric value for cost: ";
         cin.clear();
         cin.ignore(10000, '\n');
@@ -121,18 +134,18 @@ void getValidatedInputs(string& favoriteReplica, string& playStyle, int& hoursPe
 }
 
 // Function to perform calculations and evaluate compound condition if/else statements
-void calculateTacticalMetrics(int hoursPerMonth, double costPerBb, string playStyle,
+void calculateTacticalMetrics(double averageHours, double costPerBb, string playStyle,
     double& estimatedBbsPerMonth, double& totalMonthlyCost,
     string& operatorTier, string& budgetWarning) {
     // Compute derived values
-    estimatedBbsPerMonth = hoursPerMonth * 600.0;
+    estimatedBbsPerMonth = averageHours * 600.0;
     totalMonthlyCost = estimatedBbsPerMonth * costPerBb;
 
     // Compound if/else block 1: Determines Operator Tier
-    if (hoursPerMonth >= 15 && costPerBb >= 0.03) {
+    if (averageHours >= 15 && costPerBb >= 0.03) {
         operatorTier = "Tier-1 Heavy Operator (High Engagement & Precision Ammo)";
     }
-    else if (hoursPerMonth >= 5 && costPerBb >= 0.02) {
+    else if (averageHours >= 5 && costPerBb >= 0.02) {
         operatorTier = "Veteran Skirmisher (Moderate Activity)";
     }
     else {
@@ -140,7 +153,7 @@ void calculateTacticalMetrics(int hoursPerMonth, double costPerBb, string playSt
     }
 
     // Compound if/else block 2: Determines Budget Risk
-    if (totalMonthlyCost > 40.0 && (playStyle == "Milsim" || playStyle == "milsim" || playStyle == "CQB" || playStyle == "cqb")) {
+    if (averageHours > 40.0 && (playStyle == "Milsim" || playStyle == "milsim" || playStyle == "CQB" || playStyle == "cqb")) {
         budgetWarning = "High Consumption Warning: High expenditure rate detected for intensive play style.";
     }
     else {
@@ -149,9 +162,9 @@ void calculateTacticalMetrics(int hoursPerMonth, double costPerBb, string playSt
 }
 
 // Function to run the interactive menu using a do-while loop and switch statement
-void runTacticalMenu(string favoriteReplica, string playStyle, int hoursPerMonth,
+void runTacticalMenu(string favoriteReplica, string playStyle,
     double estimatedBbsPerMonth, double costPerBb, double totalMonthlyCost,
-    string operatorTier, string budgetWarning) {
+    string operatorTier, string budgetWarning){
     int menuChoice = 0;
 
     do {
@@ -194,20 +207,63 @@ void runTacticalMenu(string favoriteReplica, string playStyle, int hoursPerMonth
     } while (menuChoice != 3);
 }
 
+//Function to get montly hours average
+double getMonthlyHoursAverage(double monthlyHours[], int months) {
+
+    double totalHours = 0.0;
+
+    cout << "Enter your hours for the last "<< months << " MONTHS:" << endl;
+
+    for (int i = 0; i < months; i++) {
+
+        cout << "Enter hours played for Month " << i + 1 << ": ";
+        cin >> monthlyHours[i];
+
+        // Array Based Validation 
+        while (!cin || monthlyHours[i] < 0) {
+            cout << "Invalid input. Enter zero or more hours: ";
+            cin.clear();
+            cin.ignore(10000, '\n');
+            cin >> monthlyHours[i];
+        }
+
+        totalHours += monthlyHours[i];
+    }
+
+    cin.ignore(10000, '\n');
+
+    // Return the calculated average
+    return totalHours / months;
+}
+
 // Function to display the summary table and save the formatted report to "report.txt"
-void saveReportToFile(string favoriteReplica, string playStyle, int hoursPerMonth,
+void saveReportToFile(string favoriteReplica, string playStyle, double averageHours,
     double estimatedBbsPerMonth, double costPerBb, double totalMonthlyCost,
-    string operatorTier, string budgetWarning) {
+    string operatorTier, string budgetWarning, SkillLevel userSkill) {
+
+    //If/Else Strucure for userSkill enum(NEW)
+    string skillName = "";
+    if (userSkill == BEGINNER) {
+        skillName = "Beginner";
+    }
+    else if (userSkill == INTERMEDIATE) {
+        skillName = "Intermediate";
+    }
+    else {
+        skillName = "Advanced";
+    }
+
 
     // --- Formatted Console Output Table ---
     cout << fixed << showpoint << setprecision(2);
     cout << "========================================================" << endl;
     cout << "               AIRSOFT TACTICAL SUMMARY REPORT          " << endl;
     cout << "========================================================" << endl;
-    cout << setw(30) << left << "Favorite Replica:" << setw(15) << right << favoriteReplica << endl;
-    cout << setw(30) << left << "Preferred Play Style:" << setw(15) << right << playStyle << endl;
-    cout << setw(30) << left << "Hours Played/Month:" << setw(15) << right << hoursPerMonth << endl;
-    cout << setw(30) << left << "Estimated BBs/Month:" << setw(15) << right << estimatedBbsPerMonth << endl;
+    cout << setw(30) << left << "Favorite Replica:" << setw(20) << right << favoriteReplica << endl;
+    cout << setw(30) << left << "Preferred Play Style:" << setw(20) << right << playStyle << endl;
+    cout << setw(30) << left << "Skill Level:" << setw(20) << right << skillName << endl;
+    cout << setw(30) << left << "Average Hours Played/Month:" << setw(20) << right << averageHours << endl;
+    cout << setw(30) << left << "Estimated BBs/Month:" << setw(20) << right << estimatedBbsPerMonth << endl;
     cout << setw(30) << left << "Cost Per BB:" << setw(15) << right << "$" << costPerBb << endl;
     cout << setw(30) << left << "Estimated Monthly Expense:" << setw(15) << right << "$" << totalMonthlyCost << endl;
     cout << "========================================================" << endl;
@@ -226,14 +282,15 @@ void saveReportToFile(string favoriteReplica, string playStyle, int hoursPerMont
     reportFile << "========================================================" << endl;
     reportFile << "               AIRSOFT TACTICAL SUMMARY REPORT          " << endl;
     reportFile << "========================================================" << endl;
-    reportFile << setw(30) << left << "Favorite Replica:" << setw(15) << right << favoriteReplica << endl;
-    reportFile << setw(30) << left << "Preferred Play Style:" << setw(15) << right << playStyle << endl;
-    reportFile << setw(30) << left << "Hours Played/Month:" << setw(15) << right << hoursPerMonth << endl;
-    reportFile << setw(30) << left << "Estimated BBs/Month:" << setw(15) << right << estimatedBbsPerMonth << endl;
-    reportFile << setw(30) << left << "Cost Per BB:" << setw(15) << right << "$" << costPerBb << endl;
-    reportFile << setw(30) << left << "Estimated Monthly Expense:" << setw(15) << right << "$" << totalMonthlyCost << endl;
-    reportFile << setw(30) << left << "Operator Classification:" << setw(15) << right << operatorTier << endl;
-    reportFile << setw(30) << left << "Budget Warning:" << setw(15) << right << budgetWarning << endl;
+    reportFile << setw(30) << left << "Favorite Replica:" << setw(20) << right << favoriteReplica << endl;
+    reportFile << setw(30) << left << "Preferred Play Style:" << setw(20) << right << playStyle << endl;
+    reportFile << setw(30) << left << "Skill Level:" << setw(20) << right << skillName << endl;//
+    reportFile << setw(30) << left << "Average Hours Played/Month:" << setw(20) << right << averageHours << endl;
+    reportFile << setw(30) << left << "Estimated BBs/Month:" << setw(20) << right << estimatedBbsPerMonth << endl;
+    reportFile << setw(30) << left << "Cost Per BB:" << setw(20) << right << "$" << costPerBb << endl;
+    reportFile << setw(30) << left << "Estimated Monthly Expense:" << setw(20) << right << "$" << totalMonthlyCost << endl;
+    reportFile << setw(30) << left << "Operator Classification:" << setw(20) << right << operatorTier << endl;
+    reportFile << setw(30) << left << "Budget Warning:" << setw(20) << right << budgetWarning << endl;
     reportFile << "========================================================" << endl;
 
     reportFile.close();
